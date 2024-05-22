@@ -13,9 +13,8 @@ def execute_query(query):
     result = None
     try:
         cur.execute(query)
-        # Fetch the result if it's a SELECT COUNT(*) statement
         if query.strip().upper().startswith("SELECT COUNT"):
-            result = cur.fetchone()[0] # Assuming the query returns a single value
+            result = cur.fetchone()[0]
         conn.commit()
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -24,7 +23,6 @@ def execute_query(query):
         conn.close()
     return result
 
-# Example usage
 if __name__ == "__main__":
     numofcustomer = "SELECT COUNT(cid) FROM loginscred;"
     numofpackage1 = "select count(poid) from productavail where poid = '1';"
