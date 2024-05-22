@@ -2,10 +2,7 @@ from tkinter import *
 from tkinter.ttk import Progressbar, Style
 import sys
 import home
-import os
 from random import randint
-import subprocess
-import threading
 import matplotlib.pyplot as plt
 from matplotlib import *
 from data import product_sales, progress_work, product_sales1
@@ -47,7 +44,7 @@ style = Style()
 style.configure("TProgressbar", background="blue")
 
 progress = Progressbar(root, orient=HORIZONTAL, length=360, mode='determinate', style="TProgressbar")
-progress.place(x=(screen_width - progress.cget('length')) // 2, y=580)  # Center the progress bar
+progress.place(x=(screen_width - progress.cget('length')) // 2, y=580)
 
 def top():
     root.withdraw()
@@ -66,8 +63,6 @@ def load():
         i += 1
     else:
         top()
-
-
 
 
 
@@ -139,28 +134,58 @@ def mainframe():
         canvas3.draw()
         canvas3.get_tk_widget().pack(side="left", fill="both", expand=True)
     
-    
+    def read_users():
+        conn = create_connection()
+        cursor = conn.cursor()
+        cursor.execute("select uniqid,cfname,cmname,clname,package_order,reservation_date,ev_address, status from customer_reservation;")
+        rows = cursor.fetchall()
+        conn.close()
+        return rows
+
+
     def ivy():
-        update_frame = tk.Frame(main_frame)
-        
-        lb = tk.Label(update_frame, text='Second Page', font=('bold',30))
-        lb.pack()
-        
-        update_frame.pack(pady=20)
+    # Create a new frame for the ivy page
+        ivy_frame = tk.Frame(main_frame)
+        ivy_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    # Fetch data from the database
+        rows = read_users()
+
+    # Create a listbox to display the data
+        result_listbox = tk.Listbox(ivy_frame, width=120, height=10)
+        result_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    # Populate the listbox with the fetched data
+        for row in rows:
+            formatted_row = f"Receipt Id: {row[0]}== Customer Info/order:   {row[1]}  {row[3]}  {row[4]}  {row[5]},  {row[6]}"
+            result_listbox.insert(tk.END, formatted_row)
+
+    # Create a text box for entering a new status
+        status_entry = tk.Entry(ivy_frame, width=50)
+        status_entry.pack(side=tk.LEFT, padx=10, pady=10)
+
+    # Create a button to update the status
+        update_button = tk.Button(ivy_frame, text="Update Status", command=lambda: update_status(status_entry.get()))
+        update_button.pack(side=tk.LEFT, padx=10, pady=10)
+
+    # Define the update_status function to update the status in the database
+        def update_status(uniqid, new_status='Done'):
+            conn = create_connection()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE pstatus SET status=%s WHERE uniqid=%s", (new_status, uniqid))
+            conn.commit()
+            conn.close()
+            result_listbox.delete(0, tk.END)
+            rows = read_users()
+            for row in rows:
+                formatted_row = f"Customers: {row[0]}, {row[1]},  {row[3]},  {row[4]},  {row[5]},  {row[6]}"
+                result_listbox.insert(tk.END, formatted_row)
     
-    def bnm():
-        setting_frame = tk.Frame(main_frame)
-        
-        lb = tk.Label(setting_frame, text='Third Page', font=('bold',30))
-        lb.pack()
-        
-        setting_frame.pack(pady=20)
     
     
     def hide_indicators():
         home_indicate.config(bg='blue')
         update_indicate.config(bg='blue')
-        setting_indicate.config(bg='blue')
     
     def delete_pages():
         for frame in main_frame.winfo_children():
@@ -189,18 +214,11 @@ def mainframe():
     update_indicate = tk.Label(options_frame, text='',bg='blue')
     update_indicate.place(x=3, y=100, width=5,height=40)
     
-    setting_btn = tk.Button(options_frame,text='Setting', font=('Bold',15), bg='Blue',
-                            command=lambda: indicate(setting_indicate, bnm))
-    setting_btn.place(x=10, y=150)
-    
-    setting_indicate = tk.Label(options_frame, text='',bg='blue')
-    setting_indicate.place(x=3, y=150, width=5,height=40)
-    
     exit_btn = tk.Button(options_frame,text='Exit', font=('Bold',15), bg='Blue', command=root.destroy)
-    exit_btn.place(x=10, y=200)
+    exit_btn.place(x=10, y=150)
     
     exit_indicate = tk.Label(options_frame, text='',bg='blue')
-    exit_indicate.place(x=3, y=200, width=5,height=40)
+    exit_indicate.place(x=3, y=150, width=5,height=40)
     
     
     options_frame.pack(side=tk.LEFT)
